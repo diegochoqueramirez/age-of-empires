@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { PALETTE } from '../render/palette';
 
 export interface Vec2 {
   x: number; // posición en casillas, puede ser fraccionaria mientras se mueve
@@ -65,19 +66,30 @@ export function endTile(unit: Unit): Vec2 {
   return { x: Math.round(unit.position.x), y: Math.round(unit.position.y) };
 }
 
-/** Vista de three.js de las unidades: cilindros azules, anillo de selección y proxy de clic. */
+/** Pasos de balanceo por segundo mientras la unidad camina. */
+const BOB_FREQUENCY = 2;
+/** Amplitud del balanceo vertical, en casillas. */
+const BOB_AMPLITUDE = 0.05;
+
+/**
+ * Vista de three.js de las unidades: silueta de cuerpo cónico y cabeza esférica
+ * en el color del bando, anillo de selección y proxy de clic.
+ */
 export class UnitViews {
   readonly pickMeshes: THREE.Mesh[] = [];
-  private readonly bodies = new Map<number, THREE.Mesh>();
+  private readonly figures = new Map<number, THREE.Group>();
   private readonly rings = new Map<number, THREE.Mesh>();
+  private readonly picks = new Map<number, THREE.Mesh>();
 
   constructor(scene: THREE.Scene, units: Unit[]) {
-    const bodyGeometry = new THREE.CylinderGeometry(0.35, 0.35, 1, 16);
-    const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x2f6bff });
+    const bodyGeometry = new THREE.ConeGeometry(0.3, 0.8, 12);
+    const bodyMaterial = new THREE.MeshLambertMaterial({ color: PALETTE.player.body });
+    const headGeometry = new THREE.SphereGeometry(0.22, 12, 8);
+    const headMaterial = new THREE.MeshLambertMaterial({ color: PALETTE.player.head });
     const ringGeometry = new THREE.RingGeometry(0.45, 0.6, 32);
     ringGeometry.rotateX(-Math.PI / 2);
-    const ringMaterial = new THREE.MeshBasicMaterial({ color: 0xffe14d });
-    // Proxy invisible más grande que el cilindro: hace más fácil acertar el clic.
+    const ringMaterial = new THREE.MeshBasicMaterial({ color: PALETTE.selection });
+    // Proxy invisible más grande que la figura: hace más fácil acertar el clic.
     const pickGeometry = new THREE.SphereGeometry(0.6, 12, 8);
     const pickMaterial = new THREE.MeshBasicMaterial({
       transparent: true,
@@ -86,10 +98,17 @@ export class UnitViews {
     });
 
     for (const unit of units) {
+      const figure = new THREE.Group();
       const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-      body.position.y = 0.5;
-      scene.add(body);
-      this.bodies.set(unit.id, body);
+      body.position.y = 0.4; // la base del cono queda en el suelo
+      const head = new THREE.Mesh(headGeometry, headMaterial);
+      head.position.y = 0.95;
+      for (const mesh of [body, head]) {
+        mesh.castShadow = true;
+        figure.add(mesh);
+      }
+      scene.add(figure);
+      this.figures.set(unit.id, figure);
 
       const ring = new THREE.Mesh(ringGeometry, ringMaterial);
       ring.position.y = 0.02;
@@ -102,19 +121,26 @@ export class UnitViews {
       pick.userData.unitId = unit.id;
       scene.add(pick);
       this.pickMeshes.push(pick);
+      this.picks.set(unit.id, pick);
     }
     this.sync(units);
   }
 
-  /** Copia posición y selección del estado lógico a la escena. */
-  sync(units: Unit[]): void {
+  /**
+   * Copia posición y selección del estado lógico a la escena.
+   * Mientras la unidad tiene camino, la figura oscila verticalmente para parecer que camina.
+   */
+  sync(units: Unit[], timeSeconds: number = performance.now() / 1000): void {
     for (const unit of units) {
-      const body = this.bodies.get(unit.id);
+      const figure = this.figures.get(unit.id);
       const ring = this.rings.get(unit.id);
-      const pick = this.pickMeshes.find((mesh) => mesh.userData.unitId === unit.id);
-      if (!body || !ring || !pick) continue;
-      body.position.x = unit.position.x;
-      body.position.z = unit.position.y;
+      const pick = this.picks.get(unit.id);
+      if (!figure || !ring || !pick) continue;
+      const walking = unit.path.length > 0;
+      const bob = walking ? Math.abs(Math.sin(timeSeconds * Math.PI * BOB_FREQUENCY)) * BOB_AMPLITUDE : 0;
+      figure.position.x = unit.position.x;
+      figure.position.z = unit.position.y;
+      figure.position.y = bob;
       ring.position.x = unit.position.x;
       ring.position.z = unit.position.y;
       ring.visible = unit.selected;
