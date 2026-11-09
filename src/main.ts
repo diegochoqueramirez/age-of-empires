@@ -7,6 +7,10 @@ import { issueMoveOrder } from './game/commands';
 import { groundPoint, pickUnitAt, unitsInScreenRect, type PointerRect } from './game/selection';
 import { setSelection, type GameState } from './game/state';
 import { UnitViews, advanceUnits, createUnits } from './game/units';
+import { createMinimap } from './ui/minimap';
+import { applyHudTheme } from './ui/hud-theme';
+import { SAMPLE_RESOURCE_BAR, renderResourceBar } from './ui/resource-bar';
+import './ui/hud.css';
 
 /** Distancia mínima en píxeles para considerar que el arrastre es una caja de selección. */
 const DRAG_THRESHOLD_PX = 4;
@@ -21,6 +25,10 @@ scene.add(buildMapMesh(map));
 
 const state: GameState = { map, units: createUnits(), selectedUnitIds: [] };
 const views = new UnitViews(scene, state.units);
+
+applyHudTheme();
+renderResourceBar(document.getElementById('hud-bar') as HTMLDivElement, SAMPLE_RESOURCE_BAR);
+const minimap = createMinimap(document.getElementById('minimap') as HTMLDivElement, map);
 
 // Centro del mapa: la casilla 0 está en x = 0, así que el centro está en (MAP_SIZE - 1) / 2.
 const mapCenter = new THREE.Vector3((MAP_SIZE - 1) / 2, 0, (MAP_SIZE - 1) / 2);
@@ -95,6 +103,7 @@ function frame(now: number): void {
   controls.update(delta);
   advanceUnits(state.units, delta);
   views.sync(state.units);
+  minimap.update(state.units);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }

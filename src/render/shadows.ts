@@ -24,20 +24,36 @@ function getBlobTexture(): THREE.CanvasTexture {
 
 /**
  * Mancha de contacto: un disco translúcido plano sobre el suelo, bajo un objeto.
- * Sustituye a las sombras direccionales; el objeto se queda posado en el terreno.
+ * Complementa la sombra proyectada por el sol: marca el punto de apoyo del objeto.
  * Su posición (x, z) la fija quien la crea o la sincroniza.
+ * `opacity` escala la mancha; por defecto es suave para no duplicar la sombra proyectada.
  */
-export function contactShadow(radius: number): THREE.Mesh {
+export function contactShadow(radius: number, opacity: number = 0.5): THREE.Mesh {
   const mesh = new THREE.Mesh(
     new THREE.PlaneGeometry(radius * 2, radius * 2),
     new THREE.MeshBasicMaterial({
       map: getBlobTexture(),
       color: PALETTE.shadowBlob,
       transparent: true,
+      opacity,
       depthWrite: false,
     }),
   );
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.y = 0.01;
   return mesh;
+}
+
+/** Marca todas las mallas de `object` (y sus hijos) para que proyecten sombra del sol. */
+export function setCastShadow(object: THREE.Object3D): void {
+  object.traverse((child) => {
+    if (child instanceof THREE.Mesh) child.castShadow = true;
+  });
+}
+
+/** Marca todas las mallas de `object` (y sus hijos) para que reciban sombra del sol. */
+export function setReceiveShadow(object: THREE.Object3D): void {
+  object.traverse((child) => {
+    if (child instanceof THREE.Mesh) child.receiveShadow = true;
+  });
 }

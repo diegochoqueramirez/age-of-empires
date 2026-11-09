@@ -1,0 +1,76 @@
+/* Marcos del HUD. Los colores llegan de palette.ts vía applyHudTheme (hud-theme.ts). */
+
+:root {
+  --frame-blue: #1f2f45;
+  --frame-gold: #c9a54a;
+  --hud-text: #ffffff;
+}
+
+/* Barra de recursos: franja superior fija de 40 px, arriba a la izquierda. */
+.hud-bar {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  height: 40px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 16px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid var(--frame-blue);
+  box-shadow:
+    0 0 0 1px var(--frame-gold),
+    inset 0 0 0 1px var(--frame-gold);
+  color: var(--hud-text);
+  font: 600 14px/1 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-shadow: 0 1px 1px #000;
+  user-select: none;
+  z-index: 10;
+}
+
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hud-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+}
+
+.hud-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.hud-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Minimapa: marco en forma de rombo 2:1 en la esquina inferior derecha.
+ * El borde dorado es el fondo del contenedor recortado con clip-path; el lienzo va dentro.
+ */
+.minimap-frame {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  width: 212px;
+  height: 112px;
+  box-sizing: border-box;
+  padding: 6px;
+  background: var(--frame-gold);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  z-index: 10;
+}
+
+.minimap-frame canvas {
+  display: block;
+  width: 200px;
+  height: 100px;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  cursor: default;
+}

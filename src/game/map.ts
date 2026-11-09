@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PALETTE } from '../render/palette';
-import { contactShadow } from '../render/shadows';
+import { contactShadow, setCastShadow, setReceiveShadow } from '../render/shadows';
+import { buildBuilding, type BuildingKind } from '../render/building';
 import { createTerrainTexture, type TerrainKind } from '../render/terrain-texture';
 
 export const MAP_SIZE = 40;
@@ -18,7 +19,8 @@ export interface GameMap {
 }
 
 /** Tipo de casilla bloqueada. El agua no tiene malla propia: la pinta la textura del suelo. */
-export type ObstacleKind = 'tree' | 'rock' | 'water';
+export type ObstacleKind = 'tree' | 'rock' | 'water' | 'building';
+
 
 interface Area<K> {
   x: number;
@@ -52,10 +54,26 @@ const FOREST = [
 const ROCKS = area(28, 6, 3, 3, 'rock' as const);
 
 /**
+ * Las siete edificaciones de `referencias/edificios.jpg`, en dos filas en el sureste, como en la imagen.
+ * `x`, `y` es la esquina superior izquierda del footprint de 3×3 casillas.
+ */
+export const BUILDINGS: ReadonlyArray<{ kind: BuildingKind; x: number; y: number }> = [
+  { kind: 'church', x: 24, y: 23 },
+  { kind: 'apartments', x: 28, y: 23 },
+  { kind: 'church', x: 31, y: 23 },
+  { kind: 'apartments', x: 22, y: 28 },
+  { kind: 'church', x: 26, y: 28 },
+  { kind: 'apartments', x: 30, y: 28 },
+  { kind: 'church', x: 34, y: 28 },
+];
+
+const BUILDING_TILES = BUILDINGS.flatMap((b) => area(b.x, b.y, 3, 3, 'building' as const));
+
+/**
  * Casillas bloqueadas (bosques, rocas y agua). Coordenadas de casilla, origen arriba a la izquierda.
  * Total: 27 casillas, dentro del rango de la spec 01 (3 a 40).
  */
-export const OBSTACLES: ReadonlyArray<Area<ObstacleKind>> = [...FOREST, ...ROCKS, ...LAKE];
+export const OBSTACLES: ReadonlyArray<Area<ObstacleKind>> = [...FOREST, ...ROCKS, ...LAKE, ...BUILDING_TILES];
 
 /**
  * Terreno transitable que no bloquea: caminos y claros de tierra.
@@ -129,6 +147,7 @@ export function buildMapMesh(map: GameMap): THREE.Group {
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.set(center, 0, center);
+  setReceiveShadow(ground);
   group.add(ground);
 
   // Materiales compartidos, geometrías de árbol y roca creadas una sola vez por tipo.
@@ -146,17 +165,32 @@ export function buildMapMesh(map: GameMap): THREE.Group {
       if (!tile.blocked) continue;
       const kind = obstacleKind(tile.x, tile.y);
       if (kind === 'water') continue; // el agua ya está pintada en la textura del suelo
+      if (kind === 'building') continue; // la edificación se añade una vez, abajo
       const mesh =
         kind === 'tree'
           ? buildTree(treeMaterials)
           : buildRock((tile.x * 0.7 + tile.y * 1.3) % (Math.PI * 2), rockMaterials);
       mesh.position.set(tile.x, 0, tile.y);
+      setCastShadow(mesh);
       group.add(mesh);
       const shadow = contactShadow(kind === 'tree' ? 0.45 : 0.4);
       shadow.position.x = tile.x;
       shadow.position.z = tile.y;
       group.add(shadow);
     }
+  }
+
+  // Edificaciones: cada malla se centra en su footprint de 3×3 casillas, con mancha de contacto.
+  for (const b of BUILDINGS) {
+    const centerX = b.x + 1; // la casilla central del footprint es (x + 1, y + 1)
+    const centerZ = b.y + 1;
+    const building = buildBuilding(b.kind);
+    building.position.set(centerX, 0, centerZ);
+    group.add(building);
+    const shadow = contactShadow(1.5);
+    shadow.position.x = centerX;
+    shadow.position.z = centerZ;
+    group.add(shadow);
   }
   return group;
 }

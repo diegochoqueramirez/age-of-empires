@@ -41,10 +41,17 @@ src/
   main.ts                   Punto de entrada: wiring de entrada y bucle de render
   render/
     palette.ts              Paleta única de colores; todo color visual sale de aquí
-    scene.ts                Renderer, luz y cámara ortográfica con proyección isométrica 2:1 (elevación 30°, giro 45°)
+    scene.ts                Renderer con mapa de sombras, y cámara ortográfica con proyección isométrica 2:1 (elevación 30°, giro 45°)
+    lighting.ts             Luz ambiente y sol direccional con sombras proyectadas (noroeste a sureste, elevación 30°)
+    building.ts             Siete edificaciones de la referencia (3×3 casillas cada una), con primitivas
     camera-controls.ts      Desplazamiento de cámara con teclas y bordes de pantalla
     terrain-texture.ts      Textura del suelo en píxel: pasto, tierra, agua y transiciones
-    shadows.ts              Manchas de contacto bajo árboles, rocas y unidades
+    shadows.ts              Manchas de contacto y helpers para marcar mallas que proyectan o reciben sombra
+  ui/
+    hud.css                 Marcos del HUD: barra de recursos y minimapa en rombo
+    hud-theme.ts            Publica los colores de los marcos como variables CSS desde la paleta
+    resource-bar.ts         Barra superior con madera, comida, oro, piedra y población (valores fijos)
+    minimap.ts              Minimapa en rombo 2:1 abajo a la derecha; solo muestra, no da órdenes
   game/
     map.ts                  Cuadrícula 40x40, terreno, obstáculos (bosques, rocas, agua) y malla del mapa
     units.ts                Unidades, posiciones iniciales, movimiento y vista (sprite del aldeano con tambaleo)
@@ -60,4 +67,6 @@ src/
 
 - La casilla `(x, y)` está centrada en el punto `(x, 0, y)` del mundo three.js.
 - Las unidades se mueven a `speed` casillas por segundo, medidas con el delta de tiempo.
-- El mapa no usa sombras direccionales: los objetos se posan con manchas de contacto. La textura del suelo se genera en código, sin assets externos.
+- El sol proyecta sombras de árboles, rocas, unidades y la edificación sobre el terreno. Las manchas de contacto se mantienen bajo cada objeto como punto de apoyo. La textura del suelo se genera en código, sin assets externos.
+- Los colores del mapa salen de la referencia `referencias/mapa.webp`, medidos con muestreo de píxeles.
+- La barra de recursos y el minimapa muestran datos fijos y no reciben clics de juego.
