@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PALETTE } from '../render/palette';
+import { contactShadow } from '../render/shadows';
 
 export interface Vec2 {
   x: number; // posición en casillas, puede ser fraccionaria mientras se mueve
@@ -80,6 +81,7 @@ export class UnitViews {
   private readonly figures = new Map<number, THREE.Group>();
   private readonly rings = new Map<number, THREE.Mesh>();
   private readonly picks = new Map<number, THREE.Mesh>();
+  private readonly shadows = new Map<number, THREE.Mesh>();
 
   constructor(scene: THREE.Scene, units: Unit[]) {
     const bodyGeometry = new THREE.ConeGeometry(0.3, 0.8, 12);
@@ -103,12 +105,13 @@ export class UnitViews {
       body.position.y = 0.4; // la base del cono queda en el suelo
       const head = new THREE.Mesh(headGeometry, headMaterial);
       head.position.y = 0.95;
-      for (const mesh of [body, head]) {
-        mesh.castShadow = true;
-        figure.add(mesh);
-      }
+      figure.add(body, head);
       scene.add(figure);
       this.figures.set(unit.id, figure);
+
+      const shadow = contactShadow(0.35);
+      scene.add(shadow);
+      this.shadows.set(unit.id, shadow);
 
       const ring = new THREE.Mesh(ringGeometry, ringMaterial);
       ring.position.y = 0.02;
@@ -135,12 +138,15 @@ export class UnitViews {
       const figure = this.figures.get(unit.id);
       const ring = this.rings.get(unit.id);
       const pick = this.picks.get(unit.id);
-      if (!figure || !ring || !pick) continue;
+      const shadow = this.shadows.get(unit.id);
+      if (!figure || !ring || !pick || !shadow) continue;
       const walking = unit.path.length > 0;
       const bob = walking ? Math.abs(Math.sin(timeSeconds * Math.PI * BOB_FREQUENCY)) * BOB_AMPLITUDE : 0;
       figure.position.x = unit.position.x;
       figure.position.z = unit.position.y;
       figure.position.y = bob;
+      shadow.position.x = unit.position.x;
+      shadow.position.z = unit.position.y;
       ring.position.x = unit.position.x;
       ring.position.z = unit.position.y;
       ring.visible = unit.selected;
