@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { PALETTE } from '../render/palette';
 import { CAMERA_AZIMUTH } from '../render/scene';
-import { loadVillagerTextures, makeShadowTexture, type VillagerTextures } from '../render/sprites';
+import { contactShadow } from '../render/shadows';
+import { loadVillagerTextures, type VillagerTextures } from '../render/sprites';
 
 export interface Vec2 {
   x: number; // posición en casillas, puede ser fraccionaria mientras se mueve
@@ -93,15 +94,6 @@ export class UnitViews {
   private textures: VillagerTextures | null = null;
 
   constructor(scene: THREE.Scene, units: Unit[]) {
-    const shadowGeometry = new THREE.PlaneGeometry(1.2, 1.2);
-    shadowGeometry.rotateX(-Math.PI / 2);
-    const shadowMaterial = new THREE.MeshBasicMaterial({
-      map: makeShadowTexture(),
-      color: 0x000000,
-      transparent: true,
-      opacity: PALETTE.unitSprite.shadowOpacity,
-      depthWrite: false,
-    });
     const ringGeometry = new THREE.RingGeometry(0.45, 0.6, 32);
     ringGeometry.rotateX(-Math.PI / 2);
     const ringMaterial = new THREE.MeshBasicMaterial({ color: PALETTE.selection });
@@ -122,8 +114,7 @@ export class UnitViews {
       this.sprites.set(unit.id, sprite);
       this.mirrored.set(unit.id, false);
 
-      const shadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
-      shadow.position.y = 0.01;
+      const shadow = contactShadow(0.6);
       scene.add(shadow);
       this.shadows.set(unit.id, shadow);
 

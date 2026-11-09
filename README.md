@@ -41,14 +41,15 @@ src/
   main.ts                   Punto de entrada: wiring de entrada y bucle de render
   render/
     palette.ts              Paleta única de colores; todo color visual sale de aquí
-    scene.ts                Renderer, luces con sombras y cámara ortográfica con proyección isométrica 2:1 (elevación 30°, giro 45°)
+    scene.ts                Renderer, luz y cámara ortográfica con proyección isométrica 2:1 (elevación 30°, giro 45°)
     camera-controls.ts      Desplazamiento de cámara con teclas y bordes de pantalla
+    terrain-texture.ts      Textura del suelo en píxel: pasto, tierra, agua y transiciones
+    shadows.ts              Manchas de contacto bajo árboles, rocas y unidades
   game/
-    map.ts                  Cuadrícula 40x40, obstáculos y malla visual del mapa
+    map.ts                  Cuadrícula 40x40, terreno, obstáculos (bosques, rocas, agua) y malla del mapa
     units.ts                Unidades, posiciones iniciales, movimiento y vista (sprite del aldeano con tambaleo)
-    sprites.ts              Carga de `src/assets/aldeano.png` (quita el fondo y reduce a píxeles) y sombra ovalada
+    sprites.ts              Carga de `src/assets/aldeano.png` (quita el fondo y reduce a píxeles)
     cursor.ts               Cursor de mano señalando (`src/assets/cursor-pointer.png`) sobre el canvas
-    assets/aldeano.png      Sprite del aldeano usado para todas las unidades
     state.ts                Estado de partida y selección
     selection.ts            Raycast de clic, selección por caja y punto del suelo
     commands.ts             Órdenes de movimiento con clic derecho
@@ -59,3 +60,4 @@ src/
 
 - La casilla `(x, y)` está centrada en el punto `(x, 0, y)` del mundo three.js.
 - Las unidades se mueven a `speed` casillas por segundo, medidas con el delta de tiempo.
+- El mapa no usa sombras direccionales: los objetos se posan con manchas de contacto. La textura del suelo se genera en código, sin assets externos.

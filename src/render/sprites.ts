@@ -51,21 +51,6 @@ export async function loadVillagerTextures(url: string = villagerUrl): Promise<V
   return { normal, mirrored, width: cols, height: rows };
 }
 
-/** Sombra ovalada plana: degradado radial comprimido a proporción 2:1, como el suelo isométrico. */
-export function makeShadowTexture(): THREE.Texture {
-  const canvas = createCanvas(32, 32);
-  const ctx = get2d(canvas);
-  ctx.translate(16, 16);
-  ctx.scale(1, 0.5);
-  const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 16);
-  gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
-  gradient.addColorStop(0.6, 'rgba(0, 0, 0, 0.8)');
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(-16, -32, 32, 64);
-  return new THREE.CanvasTexture(canvas);
-}
-
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();

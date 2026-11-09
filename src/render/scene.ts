@@ -19,8 +19,6 @@ export const CAMERA = {
 
 const DEG_TO_RAD = Math.PI / 180;
 const CAMERA_DISTANCE = 100;
-/** Semiancho del área con sombra, en casillas. Cubre el mapa de 40x40 con margen. */
-const SHADOW_HALF_EXTENT = 30;
 
 const ELEVATION = CAMERA.elevationDeg * DEG_TO_RAD;
 /** Giro en radianes; también usado por camera-controls para orientar WASD. */
@@ -44,31 +42,20 @@ export interface SceneContext {
 export function createScene(canvas: HTMLCanvasElement): SceneContext {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  // PCFSoftShadowMap fue retirado en three 0.187; PCFShadowMap es el reemplazo directo.
-  renderer.shadowMap.type = THREE.PCFShadowMap;
+  // Sin sombras direccionales: los objetos se posan con manchas de contacto (ver shadows.ts).
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(PALETTE.background);
 
   scene.add(new THREE.AmbientLight(PALETTE.ambient, 0.6));
 
-  // Sol cálido que apunta al centro del mapa, con sombras.
+  // Sol cálido que apunta al centro del mapa. Solo da forma al volumen de árboles, rocas y unidades.
   // El centro del mapa está en (19.5, 0, 19.5), así que el objetivo y la posición se desplazan desde ahí.
   const mapCenterX = 19.5;
   const mapCenterZ = 19.5;
   const sun = new THREE.DirectionalLight(PALETTE.sun, 0.8);
   sun.position.set(mapCenterX + 10, 20, mapCenterZ + 10);
   sun.target.position.set(mapCenterX, 0, mapCenterZ);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(PALETTE.shadowMapSize, PALETTE.shadowMapSize);
-  sun.shadow.camera.left = -SHADOW_HALF_EXTENT;
-  sun.shadow.camera.right = SHADOW_HALF_EXTENT;
-  sun.shadow.camera.top = SHADOW_HALF_EXTENT;
-  sun.shadow.camera.bottom = -SHADOW_HALF_EXTENT;
-  sun.shadow.camera.near = 1;
-  sun.shadow.camera.far = 100;
-  sun.shadow.bias = -0.0005;
   scene.add(sun);
   scene.add(sun.target);
 
