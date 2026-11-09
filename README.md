@@ -41,7 +41,7 @@ src/
   main.ts                   Punto de entrada: wiring de entrada y bucle de render
   render/
     palette.ts              Paleta única de colores; todo color visual sale de aquí
-    scene.ts                Renderer, luz y cámara ortográfica isométrica (30° de inclinación, 2:1)
+    scene.ts                Renderer, luz y cámara ortográfica con proyección isométrica 2:1 (elevación 30°, giro 45°)
     camera-controls.ts      Desplazamiento de cámara con teclas y bordes de pantalla
     terrain-texture.ts      Textura del suelo en píxel: pasto, tierra, agua y transiciones
     shadows.ts              Manchas de contacto bajo árboles, rocas y unidades

@@ -1,22 +1,34 @@
 import * as THREE from 'three';
 import { PALETTE } from './palette';
 
-/** Altura visible del mundo en unidades de casilla. Cabe el mapa de 40x40 entero. */
-export const VIEW_HEIGHT = 36;
 /**
- * Inclinación de la cámara respecto al suelo: 30°. Con yaw de 45° cada casilla
- * se ve como rombo de 2:1 (1 / sen 30° = 2), la proporción del mapa de AoE1.
+ * Proyección de la cámara. Con elevación de 30° y giro de 45°, una casilla cuadrada
+ * se ve como rombo 2:1 (sin(30°) = 0.5), como en AoE1.
  */
-export const CAMERA_PITCH = Math.PI / 6;
-/** Rotación de la cámara alrededor del eje Y: 45°, como en la vista isométrica clásica. */
-export const CAMERA_YAW = Math.PI / 4;
+export const CAMERA = {
+  /** Ángulo sobre el plano del suelo. */
+  elevationDeg: 30,
+  /** Giro alrededor del eje Y; alinea los ejes del mapa con las diagonales de pantalla. */
+  azimuthDeg: 45,
+  /**
+   * Altura visible en unidades de casilla. El mapa 40x40 ocupa ~28.3 de alto en pantalla
+   * con este ángulo; 34 deja margen alrededor.
+   */
+  viewSize: 34,
+} as const;
+
+const DEG_TO_RAD = Math.PI / 180;
 const CAMERA_DISTANCE = 100;
+
+const ELEVATION = CAMERA.elevationDeg * DEG_TO_RAD;
+/** Giro en radianes; también usado por camera-controls para orientar WASD. */
+export const CAMERA_AZIMUTH = CAMERA.azimuthDeg * DEG_TO_RAD;
 
 /** Vector unitario desde el objetivo hacia la cámara. */
 const OFFSET_DIRECTION = new THREE.Vector3(
-  Math.sin(CAMERA_YAW) * Math.cos(CAMERA_PITCH),
-  Math.sin(CAMERA_PITCH),
-  Math.cos(CAMERA_YAW) * Math.cos(CAMERA_PITCH),
+  Math.sin(CAMERA_AZIMUTH) * Math.cos(ELEVATION),
+  Math.sin(ELEVATION),
+  Math.cos(CAMERA_AZIMUTH) * Math.cos(ELEVATION),
 );
 
 export interface SceneContext {
@@ -54,7 +66,7 @@ export function createScene(canvas: HTMLCanvasElement): SceneContext {
     const width = window.innerWidth;
     const height = window.innerHeight;
     renderer.setSize(width, height, false);
-    const halfHeight = VIEW_HEIGHT / 2;
+    const halfHeight = CAMERA.viewSize / 2;
     const halfWidth = halfHeight * (width / height);
     camera.left = -halfWidth;
     camera.right = halfWidth;
@@ -68,7 +80,7 @@ export function createScene(canvas: HTMLCanvasElement): SceneContext {
   return { renderer, scene, camera, resize };
 }
 
-/** Coloca la cámara mirando a `target` desde la inclinación isométrica. */
+/** Coloca la cámara mirando a `target` desde la proyección 2:1. */
 export function placeCamera(camera: THREE.OrthographicCamera, target: THREE.Vector3): void {
   camera.position.copy(target).addScaledVector(OFFSET_DIRECTION, CAMERA_DISTANCE);
   camera.lookAt(target);
