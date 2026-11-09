@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PALETTE } from './palette';
+import { createLighting } from './lighting';
 
 /**
  * Proyección de la cámara. Con elevación de 30° y giro de 45°, una casilla cuadrada
@@ -42,22 +43,14 @@ export interface SceneContext {
 export function createScene(canvas: HTMLCanvasElement): SceneContext {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  // Sin sombras direccionales: los objetos se posan con manchas de contacto (ver shadows.ts).
+  // Sombras proyectadas por el sol (ver lighting.ts). Los objetos eligen si proyectan o reciben.
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(PALETTE.background);
 
-  scene.add(new THREE.AmbientLight(PALETTE.ambient, 0.6));
-
-  // Sol cálido que apunta al centro del mapa. Solo da forma al volumen de árboles, rocas y unidades.
-  // El centro del mapa está en (19.5, 0, 19.5), así que el objetivo y la posición se desplazan desde ahí.
-  const mapCenterX = 19.5;
-  const mapCenterZ = 19.5;
-  const sun = new THREE.DirectionalLight(PALETTE.sun, 0.8);
-  sun.position.set(mapCenterX + 10, 20, mapCenterZ + 10);
-  sun.target.position.set(mapCenterX, 0, mapCenterZ);
-  scene.add(sun);
-  scene.add(sun.target);
+  createLighting(scene);
 
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
   placeCamera(camera, new THREE.Vector3(0, 0, 0));

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { PALETTE } from '../render/palette';
-import { contactShadow } from '../render/shadows';
+import { contactShadow, setCastShadow } from '../render/shadows';
 
 export interface Vec2 {
   x: number; // posición en casillas, puede ser fraccionaria mientras se mueve
@@ -106,6 +106,7 @@ export class UnitViews {
       const head = new THREE.Mesh(headGeometry, headMaterial);
       head.position.y = 0.95;
       figure.add(body, head);
+      setCastShadow(figure);
       scene.add(figure);
       this.figures.set(unit.id, figure);
 
