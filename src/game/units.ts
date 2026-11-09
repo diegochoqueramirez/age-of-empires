@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { PALETTE } from '../render/palette';
+import { CAMERA_AZIMUTH } from '../render/scene';
 import { contactShadow } from '../render/shadows';
+import { loadVillagerTextures, type VillagerTextures } from '../render/sprites';
 
 export interface Vec2 {
   x: number; // posición en casillas, puede ser fraccionaria mientras se mueve
@@ -67,27 +69,31 @@ export function endTile(unit: Unit): Vec2 {
   return { x: Math.round(unit.position.x), y: Math.round(unit.position.y) };
 }
 
-/** Pasos de balanceo por segundo mientras la unidad camina. */
-const BOB_FREQUENCY = 2;
-/** Amplitud del balanceo vertical, en casillas. */
-const BOB_AMPLITUDE = 0.05;
+/** Altura del sprite de unidad en el mundo, en casillas. El ancho sale de la proporción de la imagen. */
+const UNIT_WORLD_HEIGHT = 1.3;
+/** Ciclos de tambaleo por segundo. Un ciclo completo son dos pasos (izquierda y derecha). */
+const WADDLE_FREQUENCY = 1.5;
+/** Inclinación máxima del tambaleo, en radianes (~10°). */
+const WADDLE_TILT = 0.17;
+/** Altura del saltito en cada paso, en casillas. */
+const HOP_AMPLITUDE = 0.12;
 
 /**
- * Vista de three.js de las unidades: silueta de cuerpo cónico y cabeza esférica
- * en el color del bando, anillo de selección y proxy de clic.
+ * Vista de three.js de las unidades: sprite del aldeano (`aldeano.png`) con espejo según
+ * hacia dónde camina, tambaleo con saltito al moverse, sombra ovalada bajo los pies,
+ * anillo de selección y proxy de clic.
  */
 export class UnitViews {
   readonly pickMeshes: THREE.Mesh[] = [];
-  private readonly figures = new Map<number, THREE.Group>();
+  private readonly sprites = new Map<number, THREE.Sprite>();
+  private readonly shadows = new Map<number, THREE.Mesh>();
   private readonly rings = new Map<number, THREE.Mesh>();
   private readonly picks = new Map<number, THREE.Mesh>();
-  private readonly shadows = new Map<number, THREE.Mesh>();
+  /** Si la unidad mira hacia la izquierda de la pantalla. Presentación, no estado de juego. */
+  private readonly mirrored = new Map<number, boolean>();
+  private textures: VillagerTextures | null = null;
 
   constructor(scene: THREE.Scene, units: Unit[]) {
-    const bodyGeometry = new THREE.ConeGeometry(0.3, 0.8, 12);
-    const bodyMaterial = new THREE.MeshLambertMaterial({ color: PALETTE.player.body });
-    const headGeometry = new THREE.SphereGeometry(0.22, 12, 8);
-    const headMaterial = new THREE.MeshLambertMaterial({ color: PALETTE.player.head });
     const ringGeometry = new THREE.RingGeometry(0.45, 0.6, 32);
     ringGeometry.rotateX(-Math.PI / 2);
     const ringMaterial = new THREE.MeshBasicMaterial({ color: PALETTE.selection });
@@ -100,16 +106,15 @@ export class UnitViews {
     });
 
     for (const unit of units) {
-      const figure = new THREE.Group();
-      const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-      body.position.y = 0.4; // la base del cono queda en el suelo
-      const head = new THREE.Mesh(headGeometry, headMaterial);
-      head.position.y = 0.95;
-      figure.add(body, head);
-      scene.add(figure);
-      this.figures.set(unit.id, figure);
+      // Oculto hasta que cargue la imagen: sin mapa, un SpriteMaterial se vería como un cuadrado blanco.
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ alphaTest: 0.5 }));
+      sprite.center.set(0.5, 0); // el punto de anclaje es el suelo, bajo los pies
+      sprite.visible = false;
+      scene.add(sprite);
+      this.sprites.set(unit.id, sprite);
+      this.mirrored.set(unit.id, false);
 
-      const shadow = contactShadow(0.35);
+      const shadow = contactShadow(0.6);
       scene.add(shadow);
       this.shadows.set(unit.id, shadow);
 
@@ -126,27 +131,55 @@ export class UnitViews {
       this.pickMeshes.push(pick);
       this.picks.set(unit.id, pick);
     }
+
+    loadVillagerTextures()
+      .then((textures) => {
+        this.textures = textures;
+        const spriteWidth = (UNIT_WORLD_HEIGHT * textures.width) / textures.height;
+        for (const sprite of this.sprites.values()) {
+          sprite.scale.set(spriteWidth, UNIT_WORLD_HEIGHT, 1);
+          sprite.visible = true;
+        }
+      })
+      .catch((error: unknown) => console.error(error));
+
     this.sync(units);
   }
 
   /**
-   * Copia posición y selección del estado lógico a la escena.
-   * Mientras la unidad tiene camino, la figura oscila verticalmente para parecer que camina.
+   * Copia posición, orientación y selección del estado lógico a la escena.
+   * Mientras la unidad tiene camino, se tambalea y da un saltito en cada paso.
    */
   sync(units: Unit[], timeSeconds: number = performance.now() / 1000): void {
     for (const unit of units) {
-      const figure = this.figures.get(unit.id);
+      const sprite = this.sprites.get(unit.id);
+      const shadow = this.shadows.get(unit.id);
       const ring = this.rings.get(unit.id);
       const pick = this.picks.get(unit.id);
-      const shadow = this.shadows.get(unit.id);
-      if (!figure || !ring || !pick || !shadow) continue;
+      if (!sprite || !shadow || !ring || !pick) continue;
       const walking = unit.path.length > 0;
-      const bob = walking ? Math.abs(Math.sin(timeSeconds * Math.PI * BOB_FREQUENCY)) * BOB_AMPLITUDE : 0;
-      figure.position.x = unit.position.x;
-      figure.position.z = unit.position.y;
-      figure.position.y = bob;
-      shadow.position.x = unit.position.x;
-      shadow.position.z = unit.position.y;
+
+      if (walking) {
+        const next = unit.path[0];
+        const dx = next.x - unit.position.x;
+        const dy = next.y - unit.position.y;
+        // Componente horizontal en pantalla del siguiente paso (ejes de la cámara).
+        const screenX = dx * Math.cos(CAMERA_AZIMUTH) - dy * Math.sin(CAMERA_AZIMUTH);
+        // Si el paso es casi vertical en pantalla, se mantiene la orientación anterior.
+        if (Math.abs(screenX) > 0.01) this.mirrored.set(unit.id, screenX > 0);
+      }
+
+      if (this.textures) {
+        sprite.material.map = this.mirrored.get(unit.id) ? this.textures.mirrored : this.textures.normal;
+      }
+
+      // Tambaleo: la inclinación va de un lado al otro; el saltito es máximo al cruzar el centro y cae a 0 en los extremos.
+      const phase = timeSeconds * Math.PI * 2 * WADDLE_FREQUENCY;
+      sprite.material.rotation = walking ? Math.sin(phase) * WADDLE_TILT : 0;
+      const hop = walking ? Math.abs(Math.cos(phase)) * HOP_AMPLITUDE : 0;
+
+      sprite.position.set(unit.position.x, hop, unit.position.y);
+      shadow.position.set(unit.position.x, 0.01, unit.position.y);
       ring.position.x = unit.position.x;
       ring.position.z = unit.position.y;
       ring.visible = unit.selected;

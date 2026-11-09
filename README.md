@@ -47,7 +47,9 @@ src/
     shadows.ts              Manchas de contacto bajo árboles, rocas y unidades
   game/
     map.ts                  Cuadrícula 40x40, terreno, obstáculos (bosques, rocas, agua) y malla del mapa
-    units.ts                Unidades, posiciones iniciales, movimiento y vista
+    units.ts                Unidades, posiciones iniciales, movimiento y vista (sprite del aldeano con tambaleo)
+    sprites.ts              Carga de `src/assets/aldeano.png` (quita el fondo y reduce a píxeles)
+    cursor.ts               Cursor de mano señalando (`src/assets/cursor-pointer.png`) sobre el canvas
     state.ts                Estado de partida y selección
     selection.ts            Raycast de clic, selección por caja y punto del suelo
     commands.ts             Órdenes de movimiento con clic derecho
