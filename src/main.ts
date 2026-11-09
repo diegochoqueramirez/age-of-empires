@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createCameraControls } from './render/camera-controls';
+import { applyPointerCursor } from './render/cursor';
 import { createScene } from './render/scene';
 import { MAP_SIZE, buildMapMesh, createMap } from './game/map';
 import { issueMoveOrder } from './game/commands';
@@ -12,6 +13,7 @@ const DRAG_THRESHOLD_PX = 4;
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const selectionBox = document.getElementById('selection-box') as HTMLDivElement;
+applyPointerCursor(canvas);
 
 const { renderer, scene, camera } = createScene(canvas);
 const map = createMap();

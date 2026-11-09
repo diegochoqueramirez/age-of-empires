@@ -45,7 +45,10 @@ src/
     camera-controls.ts      Desplazamiento de cámara con teclas y bordes de pantalla
   game/
     map.ts                  Cuadrícula 40x40, obstáculos y malla visual del mapa
-    units.ts                Unidades, posiciones iniciales, movimiento y vista
+    units.ts                Unidades, posiciones iniciales, movimiento y vista (sprite del aldeano con tambaleo)
+    sprites.ts              Carga de `src/assets/aldeano.png` (quita el fondo y reduce a píxeles) y sombra ovalada
+    cursor.ts               Cursor de mano señalando (`src/assets/cursor-pointer.png`) sobre el canvas
+    assets/aldeano.png      Sprite del aldeano usado para todas las unidades
     state.ts                Estado de partida y selección
     selection.ts            Raycast de clic, selección por caja y punto del suelo
     commands.ts             Órdenes de movimiento con clic derecho

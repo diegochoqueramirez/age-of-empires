@@ -19,6 +19,8 @@ export const PALETTE = {
   sun: 0xffe2b3,
   /** Luz ambiental fría-neutra. */
   ambient: 0x8d9aaa,
+  /** Sombra ovalada bajo las unidades. */
+  unitSprite: { shadowOpacity: 0.35 },
   /** Resolución del mapa de sombras del sol, en píxeles. Bajarla si cuesta FPS. */
   shadowMapSize: 2048,
 } as const;
