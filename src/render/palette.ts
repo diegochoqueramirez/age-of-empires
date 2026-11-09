@@ -13,8 +13,8 @@ export const PALETTE = {
   player: { body: 0x2f6bff, head: 0xf2d2b0 },
   /** Anillo de selección y borde de la caja. */
   selection: 0xffe14d,
-  /** Fondo tras el mapa: verde-azulado muy oscuro. */
-  background: 0x1e2a24,
+  /** Fondo fuera del mapa: negro casi puro, el mapa se lee como rombo. */
+  background: 0x080a09,
   /** Sol cálido. */
   sun: 0xffe2b3,
   /** Luz ambiental fría-neutra. */
