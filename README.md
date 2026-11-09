@@ -40,7 +40,8 @@ index.html                  Página con el <canvas> a pantalla completa
 src/
   main.ts                   Punto de entrada: wiring de entrada y bucle de render
   render/
-    scene.ts                Renderer, luces y cámara ortográfica isométrica a 45°
+    palette.ts              Paleta única de colores; todo color visual sale de aquí
+    scene.ts                Renderer, luces con sombras y cámara ortográfica isométrica a 45°
     camera-controls.ts      Desplazamiento de cámara con teclas y bordes de pantalla
   game/
     map.ts                  Cuadrícula 40x40, obstáculos y malla visual del mapa
