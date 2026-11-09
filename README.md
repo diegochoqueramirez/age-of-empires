@@ -41,7 +41,7 @@ src/
   main.ts                   Punto de entrada: wiring de entrada y bucle de render
   render/
     palette.ts              Paleta única de colores; todo color visual sale de aquí
-    scene.ts                Renderer, luces con sombras y cámara ortográfica isométrica a 45°
+    scene.ts                Renderer, luces con sombras y cámara ortográfica con proyección isométrica 2:1 (elevación 30°, giro 45°)
     camera-controls.ts      Desplazamiento de cámara con teclas y bordes de pantalla
   game/
     map.ts                  Cuadrícula 40x40, obstáculos y malla visual del mapa

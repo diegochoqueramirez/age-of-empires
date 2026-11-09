@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { MAP_SIZE } from '../game/map';
-import { CAMERA_YAW, placeCamera } from './scene';
+import { CAMERA_AZIMUTH, placeCamera } from './scene';
 
 /** Distancia en píxeles al borde de la ventana que activa el desplazamiento. Ajustable al probar. */
 export const EDGE_MARGIN_PX = 20;
@@ -12,8 +12,8 @@ const MIN_COORD = -0.5;
 const MAX_COORD = MAP_SIZE - 0.5;
 
 // Direcciones en el plano del suelo según la rotación de la cámara.
-const FORWARD = new THREE.Vector3(-Math.sin(CAMERA_YAW), 0, -Math.cos(CAMERA_YAW));
-const RIGHT = new THREE.Vector3(Math.cos(CAMERA_YAW), 0, -Math.sin(CAMERA_YAW));
+const FORWARD = new THREE.Vector3(-Math.sin(CAMERA_AZIMUTH), 0, -Math.cos(CAMERA_AZIMUTH));
+const RIGHT = new THREE.Vector3(Math.cos(CAMERA_AZIMUTH), 0, -Math.sin(CAMERA_AZIMUTH));
 
 export interface CameraControls {
   /** Punto del suelo al que mira la cámara. */
