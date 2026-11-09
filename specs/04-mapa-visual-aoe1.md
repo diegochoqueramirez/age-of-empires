@@ -1,4 +1,4 @@
-# SPEC 03 — Mapa visual estilo AoE1
+# SPEC 04 — Mapa visual estilo AoE1
 
 > **Estado:** Implementado (verificación manual de interacción pendiente)
 > **Depende de:** [01 — MVP AoE1](./01-mvp-aoe1.md), [02 — Identidad visual](./02-identidad-visual.md)
@@ -36,7 +36,7 @@ La textura del suelo se genera en código, igual que en la spec 02: nada de imá
 
 - Arena, colinas, acantilados y otros terrenos.
 - Rediseño de las unidades y los edificios. Siguen con primitivas.
-- Niebla de guerra y zonas sin explorar (spec 06).
+- Niebla de guerra y zonas sin explorar (spec 08).
 - Recursos, edificios, combate e IA (specs 04 y siguientes).
 - Mapas múltiples o generados de forma procedural.
 - Audio, animaciones de terreno, agua animada.
